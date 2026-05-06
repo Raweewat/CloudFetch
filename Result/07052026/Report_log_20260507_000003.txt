@@ -1,0 +1,14 @@
+============================================================
+CloudFetch — Download Failure Report
+Generated : 2026-05-07 00:00:03
+============================================================
+
+Total Failed : 1 file(s)
+
+----------------------------------------
+
+[1] report_06052026.csv
+    Bucket    : my-container
+    Path      : data/EDW/06052026/
+    Reason    : No files matched pattern
+    Timestamp : 2026-05-07 00:00:03
