@@ -27,15 +27,31 @@ CloudFetch/
 
 ## การติดตั้ง
 
+### ความต้องการของระบบ
+
+| รายการ | ข้อกำหนด |
+|---|---|
+| Python | **3.7 ขึ้นไป** |
+| GUI | ต้องการ Tkinter (มาพร้อม Python บน Windows) |
+| เครือข่าย | Internet access สำหรับ Azure / Huawei OBS (ไม่จำเป็นใน Simulation Mode) |
+
+**Tkinter ตามแต่ละ OS:**
+- **Windows** — Tkinter ติดมากับ Python โดยอัตโนมัติ ไม่ต้องติดตั้งเพิ่ม
+- **Linux (Debian/Ubuntu)** — `sudo apt install python3-tk`
+- **Linux (Fedora/RHEL)** — `sudo dnf install python3-tkinter`
+- **macOS** — ปกติติดมากับ Python หากเปิดไม่ได้ให้รัน `brew install python-tk`
+
+### ติดตั้ง Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-| Package | ใช้สำหรับ |
-|---|---|
-| `azure-storage-blob` | เชื่อมต่อ Azure Blob Storage |
-| `esdk-obs-python` | เชื่อมต่อ Huawei OBS |
-| `plyer` | Desktop Notification เมื่อโหลดเสร็จ |
+| Package | เวอร์ชันขั้นต่ำ | ใช้สำหรับ | จำเป็นเมื่อ |
+|---|---|---|---|
+| `azure-storage-blob` | 12.19.0 | เชื่อมต่อ Azure Blob Storage | ใช้ Azure mode |
+| `esdk-obs-python` | 3.22.0 | เชื่อมต่อ Huawei OBS | ใช้ Huawei OBS mode |
+| `plyer` | 2.1.0 | Desktop Notification เมื่อโหลดเสร็จ | Optional — หากไม่มีจะแสดงเป็น messagebox แทน |
 
 > **หมายเหตุ:** หากยังไม่มี credentials ของ Cloud จริง ให้เปิด **Simulation Mode** เพื่อทดสอบ UI และ Flow ก่อนได้เลย
 
@@ -46,6 +62,51 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+
+---
+
+## ข้อมูลที่ต้องเตรียม (Credentials & Configuration)
+
+โปรแกรม**ไม่บันทึก credentials** ไว้ในไฟล์ใดๆ — ต้องกรอกทุกครั้งที่เปิดโปรแกรม
+
+### Azure Blob Storage
+
+**Mode 1 — Connection String**
+```
+DefaultEndpointsProtocol=https;AccountName=<ชื่อบัญชี>;AccountKey=<คีย์>;EndpointSuffix=core.windows.net
+```
+หาได้จาก: Azure Portal → Storage Account → **Access Keys** → Connection string
+
+**Mode 2 — Account Name + Account Key**
+| Field | รายละเอียด | ตัวอย่าง |
+|---|---|---|
+| Account Name | ชื่อ Storage Account | `mystorageaccount` |
+| Account Key | Base64-encoded key | `dGhpcyBpcyBhIHRlc3Q=...` |
+
+หาได้จาก: Azure Portal → Storage Account → **Access Keys**
+
+---
+
+### Huawei OBS
+
+| Field | รายละเอียด | ตัวอย่าง |
+|---|---|---|
+| Access Key (AK) | รหัสประจำตัว | `AKIAIOSFODNN7EXAMPLE` |
+| Secret Key (SK) | Secret ที่ใช้คู่กับ AK | `wJalrXUtnFEMI/K7MDENG/...` |
+| Endpoint | URL ของ OBS Region | `obs.ap-southeast-1.myhuaweicloud.com` |
+
+หาได้จาก: Huawei Cloud Console → **My Credentials** → Access Keys
+> Endpoint format อาจต่างกันตาม Region — ตรวจสอบได้จาก Huawei Cloud Console > OBS > Bucket ที่ต้องการ
+
+---
+
+### ข้อมูลต่อ Download Task
+
+| Field | รายละเอียด | หมายเหตุ |
+|---|---|---|
+| Bucket / Container | ชื่อ Container (Azure) หรือ Bucket (OBS) | จำเป็น |
+| Cloud Path / Prefix | Path ภายใน Bucket | เว้นว่าง = root ของ Container |
+| Filename Pattern | ชื่อไฟล์หรือ pattern | เว้นว่าง = โหลดทุกไฟล์ใน Path |
 
 ---
 
@@ -144,19 +205,11 @@ Download Manager เริ่ม Thread
 
 ---
 
-## ข้อมูลที่ต้องการเพิ่มเติมจากผู้ใช้
+## ข้อจำกัดที่ทราบ (Known Limitations)
 
-ข้อมูลต่อไปนี้จำเป็นสำหรับการพัฒนาต่อ:
-
-| # | ข้อมูล | เหตุผลที่ต้องการ |
-|---|---|---|
-| 1 | **Authentication Method ของ Azure** ที่ใช้จริง | รองรับทั้ง Connection String, Account Key, SAS Token, และ Managed Identity — ต้องการทราบว่าใช้แบบไหนหลัก |
-| 2 | **Huawei OBS Endpoint format** ที่ใช้ | บาง Region ใช้ format ต่างกัน เช่น `obs.ap-southeast-1.myhuaweicloud.com` vs custom endpoint |
-| 3 | **ขนาดไฟล์และจำนวนไฟล์โดยประมาณ** | เพื่อ optimize การโหลด (chunk download สำหรับไฟล์ใหญ่, parallel download) |
-| 4 | **ต้องการ Parallel Download** หรือไม่ | โหลดหลายไฟล์พร้อมกัน vs ทีละไฟล์ — มีผลต่อ performance และ rate limit ของ Cloud |
-| 5 | **Proxy หรือ Network restriction** | บางองค์กรต้องผ่าน Proxy หรือมี firewall — ต้องการ config เพิ่มเติม |
-| 6 | **รูปแบบ Variable** เพิ่มเติมนอกจากวันที่ | เช่น ต้องการ variable ที่เป็น range, หรือ variable ที่อ่านจากไฟล์ config |
-| 7 | **การ Save / Load Config** | ต้องการ save ค่า Task ที่กรอกไว้เพื่อใช้ซ้ำในครั้งต่อไปหรือไม่ |
-| 8 | **OS ที่ใช้งาน** | Windows / macOS / Linux — มีผลต่อ path separator และ notification library |
-| 9 | **ต้องการ CLI mode** ด้วยหรือไม่ | รัน headless โดยไม่เปิด GUI เช่น รันผ่าน scheduler หรือ pipeline |
-| 10 | **Retry mechanism** เมื่อ network หลุด | ต้องการ retry กี่ครั้ง และ delay เท่าไหร่ระหว่าง retry |
+| ข้อจำกัด | รายละเอียด |
+|---|---|
+| Huawei OBS file listing | list ได้สูงสุด **1,000 ไฟล์ต่อ path** — ไฟล์ที่เกินจะไม่ถูกโหลด |
+| Simulation Mode | มีเพียง 7 mock files เท่านั้น (ใช้ทดสอบ UI/Flow เท่านั้น) |
+| Save/Load Config | ยังไม่มีระบบบันทึกค่า — ต้องกรอก credentials และ tasks ใหม่ทุกครั้ง |
+| Platform | UI ออกแบบสำหรับ Windows (Segoe UI font, mouse scroll) — บน macOS/Linux รูปลักษณ์อาจต่างออกไปเล็กน้อย |

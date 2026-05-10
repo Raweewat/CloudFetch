@@ -65,7 +65,7 @@ class MainWindow:
         # --- state ---
         self.cloud_var = tk.StringVar(value="azure")
         self.sim_var = tk.BooleanVar(value=True)
-        self.output_dir_var = tk.StringVar(value=os.getcwd())
+        self.output_dir_var = tk.StringVar(value=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
         # Azure credentials
         self.az_mode_var = tk.StringVar(value="connstr")
@@ -357,7 +357,7 @@ class MainWindow:
 
         tk.Label(
             sec,
-            text="ไฟล์จะถูกจัดเก็บใน:  <Output Dir> / Result / DDMMYYYY / Path_As_Folder /   เช่น  C:\\Downloads / Result / 07052026 / Data_EDW_05062026 /",
+            text="ไฟล์จะถูกจัดเก็บใน:  <Output Dir> / Result / DDMMYYYY / Path_As_Folder /   เช่น  C:\\CloudFetch / Result / 07052026 / Data_EDW_05062026 /",
             font=FONTS["small"], fg=COLORS["text_secondary"], bg=COLORS["bg"],
         ).pack(anchor="w", pady=(4, 0))
 
